@@ -1,3 +1,63 @@
+const socket = io();
+
+let codePartie = null;
+let pseudo = null;
+let idJoueur = null;
+
+// 🔗 Connexion au lobby (juste après chargement du DOM)
+document.getElementById("rejoindre-partie").addEventListener("click", () => {
+  pseudo = document.getElementById("pseudo").value.trim();
+  codePartie = document.getElementById("code-partie").value.trim();
+  if (!pseudo || !codePartie) return alert("Remplis ton pseudo et le code partie.");
+  socket.emit("rejoindre_partie", { code: codePartie, pseudo });
+});
+
+document.getElementById("creer-partie").addEventListener("click", () => {
+  pseudo = document.getElementById("pseudo").value.trim();
+  if (!pseudo) return alert("Remplis ton pseudo.");
+  socket.emit("creer_partie", { pseudo });
+});
+
+// 🚀 Réponses du serveur
+socket.on("partie_creee", ({ code, idJoueurAttribue }) => {
+  codePartie = code;
+  idJoueur = idJoueurAttribue;
+  document.getElementById("etat-lobby").textContent = `Partie créée avec code ${code}`;
+  initialiserInterfaceJeu();
+  socket.emit("pret_a_jouer", { code: codePartie, idJoueur });
+});
+
+socket.on("partie_rejointe", ({ code, idJoueurAttribue }) => {
+  idJoueur = idJoueurAttribue;
+  document.getElementById("etat-lobby").textContent = `Rejoint la partie ${code}`;
+  initialiserInterfaceJeu();
+  socket.emit("pret_a_jouer", { code: codePartie, idJoueur });
+});
+
+socket.on("tous_prets", ({ nbJoueursServeur, joueurActifServeur }) => {
+  nbJoueurs = nbJoueursServeur;
+  joueurActif = joueurActifServeur;
+  initialiserScores(nbJoueurs);
+  changerDeJoueur();
+});
+
+socket.on("liste_joueurs", (joueurs) => {
+  joueurs.forEach((joueur, i) => {
+    const titre = document.querySelector(`.wrapper-adversaire[data-joueur="${i}"] h4`);
+    if (titre) titre.textContent = joueur === pseudo ? "🧍 Toi" : `🎯 ${joueur}`;
+  });
+});
+
+socket.on("erreur", (message) => {
+  alert(message);
+});
+
+function initialiserInterfaceJeu() {
+  document.getElementById("connexion-lobby").style.display = "none";
+  document.getElementById("interface-jeu").style.display = "block";
+  console.log("✅ Interface jeu affichée");
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   const cartes = [
     // Famille Crapaud
@@ -143,10 +203,8 @@ document.addEventListener("DOMContentLoaded", function () {
   }
   
   function changerDeJoueur() {
-    joueurActif = (joueurActif + 1) % nbJoueurs;
-  
     if (joueurActif === 0) {
-      tourActuel++; // on commence un nouveau tour complet
+      tourActuel++; // ✅ Tour complet terminé
     }
   
     const indicateur = document.getElementById("tour-actuel");
@@ -192,6 +250,16 @@ document.addEventListener("DOMContentLoaded", function () {
     if (estAssassin) {
       activerPouvoirAssassin(zone, () => {
         zone.appendChild(carteSelectionnee.parentElement);
+
+        socket.emit("carte_posee", {
+          code: codePartie,
+          idJoueur,
+          carteId: carteSelectionnee.id,
+          nom: carteSelectionnee.dataset.nom,
+          role: zone.dataset.role,
+          famille: zone.dataset.famille
+        });
+
         carteSelectionnee.classList.add("locked");
         carteSelectionnee.classList.remove("selected");
 
@@ -258,6 +326,15 @@ document.addEventListener("DOMContentLoaded", function () {
     zone.appendChild(carteSelectionnee.parentElement);
     carteSelectionnee.classList.add("locked");
     carteSelectionnee.classList.remove("selected");
+
+    socket.emit("carte_posee", {
+      code: codePartie,
+      idJoueur,
+      carteId: carteSelectionnee.id,
+      nom: carteSelectionnee.dataset.nom,
+      role: zone.dataset.role,
+      famille: zone.dataset.famille
+    });
   
     const index = mainDuJoueur.indexOf(carteSelectionnee.id);
     if (index !== -1) {
@@ -328,6 +405,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const wrapper = document.createElement("div");
   wrapper.className = `wrapper-adversaire position-${position}`;
+  wrapper.dataset.joueur = numero; // ✅ important pour l'affichage des pseudos
 
   const titre = document.createElement("h4");
   titre.textContent = `Adversaire ${numero}`;
@@ -350,7 +428,6 @@ document.addEventListener("DOMContentLoaded", function () {
   wrapper.appendChild(conteneur);
   document.getElementById("domaine-adversaires").appendChild(wrapper);
 }
-
   
   function capitalize(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
@@ -423,47 +500,14 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   window.piocherCartes = function () {
-    if (!jeuCommence) {
-      alert("Veuillez d'abord valider le nombre de joueurs !");
+    if (!jeuCommence || mainDuJoueur.length > 0 || deck.length === 0) return;
+    if (joueurActif !== 0) {
+      alert("Ce n’est pas à toi de piocher !");
       return;
     }
-  
-    if (mainDuJoueur.length > 0 || deck.length === 0) return;
-  
-    document.getElementById("main-joueur").innerHTML = "";
-    mainDuJoueur = [];
-  
-    for (let i = 0; i < 3 && deck.length > 0; i++) {
-      const carteData = deck.pop();
-      mainDuJoueur.push(carteData.id);
-      const container = createCarteElement(carteData);
-      mainContainer.appendChild(container);
-    }
-
-    // Sauvegarder l'état initial du tour
-    etatTourInitial = {
-      mainHTML: document.getElementById("main-joueur").innerHTML,
-      zonesHTML: Array.from(document.querySelectorAll(".sous-zone")).map(zone => ({
-        famille: zone.dataset.famille,
-        role: zone.dataset.role,
-        html: zone.innerHTML
-      }))
-    };
-
-  
-    resetPlacementEffectue();
-    updateDeckClickable();
-    calculerScores(); // ✅ score après pioche
-  
-    // ✅ maintenant on passe au joueur suivant
-    changerDeJoueur();
-  
-    if (deck.length === 0) {
-      terminerPartie();
-    }
+    socket.emit("demande_pioche", { code: codePartie, idJoueur });
   };
-   
-  
+
   function updateDeckClickable() {
     deckElement.style.opacity = (mainDuJoueur.length === 0 && deck.length > 0) ? "1" : "0.5";
   }
@@ -663,7 +707,9 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   etatTourInitial = null; // une fois validé, on ne peut plus annuler
-  changerDeJoueur();
+
+  socket.emit("fin_tour", { code: codePartie, idJoueur });
+
   });
 
   document.getElementById("annuler-tour").addEventListener("click", () => {
@@ -702,4 +748,29 @@ document.addEventListener("DOMContentLoaded", function () {
   // ❗ etatTourInitial NON réinitialisé ici pour pouvoir recommencer plusieurs fois
   });  
   
+  socket.on("cartes_piochees", (cartes) => {
+    document.getElementById("main-joueur").innerHTML = "";
+    mainDuJoueur = [];
+    cartes.forEach(carteData => {
+      mainDuJoueur.push(carteData.id);
+      const container = createCarteElement(carteData);
+      mainContainer.appendChild(container);
+    });
+    updateDeckClickable();
+  });
+
+  socket.on("carte_posee_par_autre", ({ carteId, nom, role, famille }) => {
+    const zone = document.querySelector(`.sous-zone[data-role="${role}"][data-famille="${famille}"]`);
+    if (!zone) return;
+    const image = `images/${nom}.png`;
+    const carte = createCarteElement({ id: carteId, nom: nom, image });
+    carte.querySelector(".carte").classList.add("locked");
+    zone.appendChild(carte);
+  });
+
+  socket.on("changer_joueur", ({ joueurActif: nouveauJoueur }) => {
+    joueurActif = nouveauJoueur;
+    changerDeJoueur();
+  });
+
 });

@@ -7,110 +7,127 @@
 </head>
 
 <body>
+  <!-- 🔐 Connexion au lobby -->
+  <div id="connexion-lobby" style="background-color: #f5f5f5; padding: 1rem; border-radius: 12px; border: 2px solid #ccc; margin-bottom: 2rem;">
+    <h3>Connexion à une partie</h3>
+    <label>Pseudo :</label>
+    <input type="text" id="pseudo" placeholder="Ton nom" required style="padding: 0.5rem; margin-right: 1rem;" />
 
-  <!-- ✅ Zone de scores -->
-  <div id="zone-scores">
-    <h3>Scores</h3>
+    <label>Code partie :</label>
+    <input type="text" id="code-partie" placeholder="ABC123" required style="padding: 0.5rem; margin-right: 1rem;" />
+
+    <button id="rejoindre-partie" style="padding: 0.5rem 1rem;">Rejoindre</button>
+    <button id="creer-partie" style="padding: 0.5rem 1rem;">Créer une partie</button>
+
+    <div id="etat-lobby" style="margin-top: 1rem; font-weight: bold;"></div>
   </div>
 
-  <!-- ✅ Modal pour l’assassin -->
-  <div id="assassin-modal" class="modal">
-    <div class="modal-content">
-      <p>Souhaitez-vous activer le pouvoir de l’assassin ?</p>
-      <div class="modal-buttons">
-        <button id="btn-assassin-oui">Oui</button>
-        <button id="btn-assassin-non">Non</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ✅ Sélection nombre de joueurs -->
-  <div class="select-joueurs">
-    <label for="nb-joueurs">Nombre de joueurs :</label>
-    <select id="nb-joueurs">
-      <option value="2">2 joueurs</option>
-      <option value="3">3 joueurs</option>
-      <option value="4">4 joueurs</option>
-      <option value="5" selected>5 joueurs</option>
-    </select>
-    <button id="valider-joueurs">Valider</button>
-  </div>
-
-  <!-- ✅ Boutons de tour -->
-  <div class="zone-actions-tour">
-    <button id="annuler-tour">🔄 Recommencer le tour</button>
-    <button id="valider-tour">✅ Valider le tour</button>
-  </div>
-
-  <!-- ✅ Indicateur de tour -->
-  <div id="tour-actuel" style="font-size: 2rem; font-weight: bold;">🧍 Ton tour</div>
-
-  <!-- ✅ Domaines adversaires 1 et 4 alignés -->
-  <div id="adversaires-haut" class="ligne-adversaires-haut"></div>
-
-  <!-- ✅ Autres adversaires (gauche et droite) -->
-  <div id="domaine-adversaires"></div>
-
-  <!-- ✅ ✅ Bloc central regroupé pour gestion marge -->
-  <div class="zone-centrale">
-
-    <!-- ✅ Zone lumière -->
-    <h3>Zone de lumière</h3>
-    <div class="ligne-zones" id="zone-lumiere">
-      <div class="sous-zone" data-famille="papillon" data-role="lumiere">🌞 Papillon</div>
-      <div class="sous-zone" data-famille="crapaud" data-role="lumiere">🌞 Crapaud</div>
-      <div class="sous-zone" data-famille="rossignol" data-role="lumiere">🌞 Rossignol</div>
-      <div class="sous-zone" data-famille="espion" data-role="lumiere">🌞 Espion 🎭</div>
-      <div class="sous-zone" data-famille="lapin" data-role="lumiere">🌞 Lapin</div>
-      <div class="sous-zone" data-famille="cerf" data-role="lumiere">🌞 Cerf</div>
-      <div class="sous-zone" data-famille="carpe" data-role="lumiere">🌞 Carpe</div>
+  <!-- ✅ Interface principale du jeu (masquée au début) -->
+  <div id="interface-jeu" style="display: none;">
+    <!-- ✅ Zone de scores -->
+    <div id="zone-scores">
+      <h3>Scores</h3>
     </div>
 
-    <!-- ✅ Plateau -->
-    <div class="plateau-deck-wrapper">
-      <div class="defausse-zone">
-        <h3>Défausse</h3>
-        <div id="zone-defausse"></div>
-      </div>
-      <div class="plateau-wrapper">
-        <img src="images/plateau.jpg" alt="Plateau de jeu Courtisans" class="plateau" />
-      </div>
-      <div class="deck-zone">
-        <h3>Deck</h3>
-        <div class="deck" id="deck" onclick="piocherCartes()"></div>
+    <!-- ✅ Modal pour l’assassin -->
+    <div id="assassin-modal" class="modal">
+      <div class="modal-content">
+        <p>Souhaitez-vous activer le pouvoir de l’assassin ?</p>
+        <div class="modal-buttons">
+          <button id="btn-assassin-oui">Oui</button>
+          <button id="btn-assassin-non">Non</button>
+        </div>
       </div>
     </div>
 
-    <!-- ✅ Zone disgrâce -->
-    <h3>Zone de disgrâce</h3>
-    <div class="ligne-zones" id="zone-disgrace">
-      <div class="sous-zone" data-famille="papillon" data-role="disgrace">🌘 Papillon</div>
-      <div class="sous-zone" data-famille="crapaud" data-role="disgrace">🌘 Crapaud</div>
-      <div class="sous-zone" data-famille="rossignol" data-role="disgrace">🌘 Rossignol</div>
-      <div class="sous-zone" data-famille="espion" data-role="disgrace">🌘 Espion 🎭</div>
-      <div class="sous-zone" data-famille="lapin" data-role="disgrace">🌘 Lapin</div>
-      <div class="sous-zone" data-famille="cerf" data-role="disgrace">🌘 Cerf</div>
-      <div class="sous-zone" data-famille="carpe" data-role="disgrace">🌘 Carpe</div>
+    <!-- ✅ Sélection nombre de joueurs -->
+    <div class="select-joueurs">
+      <label for="nb-joueurs">Nombre de joueurs :</label>
+      <select id="nb-joueurs">
+        <option value="2">2 joueurs</option>
+        <option value="3">3 joueurs</option>
+        <option value="4">4 joueurs</option>
+        <option value="5" selected>5 joueurs</option>
+      </select>
+      <button id="valider-joueurs">Valider</button>
     </div>
 
-    <!-- ✅ Main du joueur -->
-    <div class="cartes-zone" id="zone-cartes">
-      <h3>Ta main</h3>
-      <div class="main-du-joueur" id="main-joueur"></div>
+    <!-- ✅ Boutons de tour -->
+    <div class="zone-actions-tour">
+      <button id="annuler-tour">🔄 Recommencer le tour</button>
+      <button id="valider-tour">✅ Valider le tour</button>
     </div>
 
-    <!-- ✅ Domaine du joueur -->
-    <div class="ligne-zones" id="domaine-joueur">
-      <div class="sous-zone" data-famille="papillon" data-role="joueur">💠 Papillon</div>
-      <div class="sous-zone" data-famille="crapaud" data-role="joueur">💠 Crapaud</div>
-      <div class="sous-zone" data-famille="rossignol" data-role="joueur">💠 Rossignol</div>
-      <div class="sous-zone" data-famille="espion" data-role="joueur">💠 Espion 🎭</div>
-      <div class="sous-zone" data-famille="lapin" data-role="joueur">💠 Lapin</div>
-      <div class="sous-zone" data-famille="cerf" data-role="joueur">💠 Cerf</div>
-      <div class="sous-zone" data-famille="carpe" data-role="joueur">💠 Carpe</div>
-    </div>
+    <!-- ✅ Indicateur de tour -->
+    <div id="tour-actuel" style="font-size: 2rem; font-weight: bold;">🧍 Ton tour</div>
 
-  </div>
+    <!-- ✅ Domaines adversaires 1 et 4 alignés -->
+    <div id="adversaires-haut" class="ligne-adversaires-haut"></div>
+
+    <!-- ✅ Autres adversaires (gauche et droite) -->
+    <div id="domaine-adversaires"></div>
+
+    <!-- ✅ ✅ Bloc central regroupé pour gestion marge -->
+    <div class="zone-centrale">
+
+      <!-- ✅ Zone lumière -->
+      <h3>Zone de lumière</h3>
+      <div class="ligne-zones" id="zone-lumiere">
+        <div class="sous-zone" data-famille="papillon" data-role="lumiere">🌞 Papillon</div>
+        <div class="sous-zone" data-famille="crapaud" data-role="lumiere">🌞 Crapaud</div>
+        <div class="sous-zone" data-famille="rossignol" data-role="lumiere">🌞 Rossignol</div>
+        <div class="sous-zone" data-famille="espion" data-role="lumiere">🌞 Espion 🎭</div>
+        <div class="sous-zone" data-famille="lapin" data-role="lumiere">🌞 Lapin</div>
+        <div class="sous-zone" data-famille="cerf" data-role="lumiere">🌞 Cerf</div>
+        <div class="sous-zone" data-famille="carpe" data-role="lumiere">🌞 Carpe</div>
+      </div>
+
+      <!-- ✅ Plateau -->
+      <div class="plateau-deck-wrapper">
+        <div class="defausse-zone">
+          <h3>Défausse</h3>
+          <div id="zone-defausse"></div>
+        </div>
+        <div class="plateau-wrapper">
+          <img src="images/plateau.jpg" alt="Plateau de jeu Courtisans" class="plateau" />
+        </div>
+        <div class="deck-zone">
+          <h3>Deck</h3>
+          <div class="deck" id="deck" onclick="piocherCartes()"></div>
+        </div>
+      </div>
+
+      <!-- ✅ Zone disgrâce -->
+      <h3>Zone de disgrâce</h3>
+      <div class="ligne-zones" id="zone-disgrace">
+        <div class="sous-zone" data-famille="papillon" data-role="disgrace">🌘 Papillon</div>
+        <div class="sous-zone" data-famille="crapaud" data-role="disgrace">🌘 Crapaud</div>
+        <div class="sous-zone" data-famille="rossignol" data-role="disgrace">🌘 Rossignol</div>
+        <div class="sous-zone" data-famille="espion" data-role="disgrace">🌘 Espion 🎭</div>
+        <div class="sous-zone" data-famille="lapin" data-role="disgrace">🌘 Lapin</div>
+        <div class="sous-zone" data-famille="cerf" data-role="disgrace">🌘 Cerf</div>
+        <div class="sous-zone" data-famille="carpe" data-role="disgrace">🌘 Carpe</div>
+      </div>
+
+      <!-- ✅ Main du joueur -->
+      <div class="cartes-zone" id="zone-cartes">
+        <h3>Ta main</h3>
+        <div class="main-du-joueur" id="main-joueur"></div>
+      </div>
+
+      <!-- ✅ Domaine du joueur -->
+      <div class="ligne-zones" id="domaine-joueur">
+        <div class="sous-zone" data-famille="papillon" data-role="joueur">💠 Papillon</div>
+        <div class="sous-zone" data-famille="crapaud" data-role="joueur">💠 Crapaud</div>
+        <div class="sous-zone" data-famille="rossignol" data-role="joueur">💠 Rossignol</div>
+        <div class="sous-zone" data-famille="espion" data-role="joueur">💠 Espion 🎭</div>
+        <div class="sous-zone" data-famille="lapin" data-role="joueur">💠 Lapin</div>
+        <div class="sous-zone" data-famille="cerf" data-role="joueur">💠 Cerf</div>
+        <div class="sous-zone" data-famille="carpe" data-role="joueur">💠 Carpe</div>
+      </div>
+
+    </div> <!-- zone-centrale -->
+  </div> <!-- interface-jeu -->
 
   <!-- ✅ Zone visualisation pour effet assassin -->
   <div id="visual-zone"></div>
@@ -122,6 +139,9 @@
     z-index: 9999; display: none;">
     🔁 Nouveau tour !
   </div>
+
+  <!-- ✅ Socket.IO (doit être avant script.js) -->
+  <script src="/socket.io/socket.io.js"></script>
 
   <!-- ✅ Script principal -->
   <script src="script.js"></script>
