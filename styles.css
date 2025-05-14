@@ -1,0 +1,516 @@
+/* === Structure générale === */
+body {
+  background-color: #c4c4c4;
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 2rem;
+}
+
+h3 {
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
+  text-align: center;
+}
+
+/* === Zones de placement (lumière, disgrâce, domaines) === */
+.ligne-zones {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.5rem;
+  width: fit-content;
+  margin: auto;
+  align-items: flex-start;
+}
+
+.sous-zone {
+  width: 160px;
+  min-height: 180px;
+  background-color: rgba(255, 255, 255, 0.7);
+  border: 2px dashed #bbb;
+  border-radius: 10px;
+  padding: 0.5rem;
+  font-size: 1.2rem;
+  text-align: center;
+  position: relative;
+  overflow-y: auto;
+  cursor: pointer;
+}
+
+.sous-zone[data-role="lumiere"] {
+  background-color: rgba(254, 254, 170, 0.6);
+}
+
+.sous-zone[data-role="disgrace"] {
+  background-color: rgba(168, 168, 246, 0.8);
+}
+
+.sous-zone[data-role="joueur"] {
+  background-color: rgba(124, 246, 132, 0.6);
+}
+
+.sous-zone[data-role^="adversaire"] {
+  background-color: rgba(255, 80, 80, 0.6);
+}
+
+/* === Plateau + Défausse + Deck === */
+.plateau-deck-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  width: 100%;
+  max-width: 1600px;
+}
+
+.defausse-zone, .deck-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#zone-defausse {
+  width: 150px;
+  height: 250px;
+  border-radius: 12px;
+  background-color: rgba(100, 100, 100, 0.1);
+  border: 2px dashed #888;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+#zone-defausse .carte-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+#zone-defausse .carte-container:not(:first-child) {
+  top: 5px;
+  left: 5px;
+  z-index: 0;
+}
+
+.plateau-wrapper {
+  width: 1260px;
+}
+
+.plateau {
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+}
+
+.deck {
+  width: 150px;
+  height: 250px;
+  border-radius: 12px;
+  background-image: url("images/dos.png");
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+
+/* === Cartes === */
+.carte-container {
+  width: 150px;
+  height: 250px;
+}
+
+.carte {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  position: relative;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.carte-face {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  position: absolute;
+  overflow: hidden;
+}
+
+.carte-face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+/* === Empilement style solitaire === */
+.sous-zone .carte-container {
+  margin-top: -220px;
+  position: relative;
+  z-index: 1;
+}
+
+.sous-zone .carte-container:first-child {
+  margin-top: 0;
+}
+
+/* === Carte sélectionnée === */
+.carte.selected {
+  box-shadow: 0 0 15px 5px rgba(100, 170, 255, 0.7);
+  outline: 3px solid #69aaff;
+}
+
+.carte.locked {
+  cursor: default;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+/* === Zone de visualisation pour l’assassinat === */
+#visual-zone {
+  position: fixed;
+  top: 10%;
+  left: 5%;
+  right: 5%;
+  bottom: 10%;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: none;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 2rem;
+  z-index: 9999;
+  overflow-y: auto;
+  gap: 1rem;
+}
+
+#visual-zone .carte-container {
+  width: 200px;
+  height: 350px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.2s ease;
+}
+
+#visual-zone .carte-container:hover {
+  transform: scale(1.08);
+}
+
+#visual-zone .carte {
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.2);
+}
+
+#visual-zone .carte .front {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+#visual-zone .carte .back {
+  display: none;
+}
+
+#visual-zone .carte img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* === Modal Assassin === */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 10000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+  background-color: #fefefe;
+  margin: 15% auto;
+  padding: 2rem;
+  border: 2px solid #888;
+  width: 300px;
+  text-align: center;
+  border-radius: 12px;
+}
+
+.modal-buttons {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: space-around;
+}
+
+.modal-buttons button {
+  padding: 0.5rem 1.2rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  background-color: #ccc;
+}
+
+.modal-buttons button:hover {
+  background-color: #bbb;
+}
+
+.btn-annuler-assassinat {
+  background-color: #ff5c5c;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-annuler-assassinat:hover {
+  background-color: #e04343;
+}
+
+.select-joueurs {
+  margin: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: #f3f3f3;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.main-du-joueur {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 1000px;
+}
+
+.wrapper-adversaire {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform-origin: center;
+}
+
+.wrapper-adversaire.position-gauche {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: rotate(-90deg) translateY(-50%);
+}
+
+.wrapper-adversaire.position-droite {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: rotate(90deg) translateY(50%);
+}
+
+.wrapper-adversaire.position-haut,
+.wrapper-adversaire.position-haut-gauche,
+.wrapper-adversaire.position-haut-droite {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* === Zone scores === */
+.scoreboard {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: rgba(255, 255, 240, 0.9);
+  border: 2px solid #ccc;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  font-size: 2rem;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  text-align: left;
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 200px;
+}
+
+.scoreboard h3 {
+  margin: 0 0 0.5rem;
+  font-size: 2rem;
+  text-align: center;
+  width: 100%;
+}
+
+.scoreboard span {
+  font-weight: bold;
+}
+
+#annuler-tour {
+  padding: 0.8rem 1.5rem;
+  font-size: 2rem;
+  background-color: #ff5c5c;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s ease;
+}
+
+#annuler-tour:hover {
+  background-color: #e04343;
+}
+
+#annuler-tour:disabled {
+  background-color: #999;
+  cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: none;
+}
+
+.wrapper-adversaire h4 {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #000000;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.select-joueurs label {
+  font-size: 2rem;
+}
+
+.select-joueurs select {
+  font-size: 2rem;
+  padding: 0.4rem 0.6rem;
+}
+
+.select-joueurs button {
+  font-size: 2rem;
+  padding: 0.7rem 1.5rem;
+  border-radius: 8px;
+  background-color: #eee;
+  border: 1px solid #aaa;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.select-joueurs button:hover {
+  background-color: #ddd;
+}
+
+.wrapper-adversaire.position-haut-gauche {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.wrapper-adversaire.position-haut-droite {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.zone-actions-tour {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  gap: 1rem;
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 0.8rem 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+}
+
+.zone-actions-tour button {
+  padding: 1rem 1.5rem;
+  font-size: 1.5rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+#annuler-tour {
+  background-color: #ff5c5c;
+  color: white;
+}
+
+#annuler-tour:hover {
+  background-color: #e04343;
+}
+
+#annuler-tour:disabled {
+  background-color: #999;
+  cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: none;
+}
+
+#valider-tour {
+  background-color: #4caf50;
+  color: white;
+}
+
+#valider-tour:hover {
+  background-color: #3e8e41;
+}
+
+#tour-actuel {
+  margin-top: 10rem; /* ➕ augmente l’espace après les boutons */
+}
+
+.cartes-zone {
+  margin-top: 10rem; /* ➕ éloigne ta main de la zone disgrâce */
+}
+
+.hidden {
+  display: none !important;
+}
+
+.wrapper-adversaire.position-haut-gauche,
+.wrapper-adversaire.position-haut-droite {
+  top: 0;
+  width: 55%; /* réduit à moins que 50% pour créer de l’espace */
+}
+
+.wrapper-adversaire.position-haut-gauche {
+  left: 2%;
+}
+
+.wrapper-adversaire.position-haut-droite {
+  right: 2%;
+}
+
+.zone-centrale {
+  margin-top: 8rem; /* Ajustable selon ce que tu veux abaisser */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
